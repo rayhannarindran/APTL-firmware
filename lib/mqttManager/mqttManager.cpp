@@ -159,6 +159,11 @@ void MqttManager::publishTelemetry() {
   Serial.printf("[pub] %s | %s\n", ok ? "OK" : "FAIL", payload);
 }
 
+void MqttManager::publishStatus(int status) {
+  statusaptl = status;
+  publishTelemetry();
+}
+
 void MqttManager::printSubTick() {
   Serial.printf("[sub] updated=%s | kodetoken=%s | up=%d | down=%d | press1=%d | press2=%d | press3=%d | stop=%d | setmax=%d | row1=%d | row2=%d | row3=%d | row4=%d | newssid=%s | newpass=%s\n",
                 subUpdated ? "Yes" : "No", kodetoken.c_str(), up, down, press1, press2, press3, stop, setmax, row1, row2, row3, row4, newssid.c_str(), newpass.c_str());
@@ -209,73 +214,126 @@ void MqttManager::processCommands() {
 
     //* WiFi Settings
     if (tempNewSsid.length() && tempNewSsid != prev_newssid && tempNewSsid != getWiFiSSID()) {
+        publishStatus(51); //* Setting WiFi SSID/Password
+
         Serial.printf("[mqtt] newssid received: %s\n", tempNewSsid.c_str());
         setWiFiCredentials(tempNewSsid, tempNewPass);
         fsManager.saveConfig();
         wifiManager.init(getWiFiSSID(), getWiFiPassword());
         wifiManager.connect();
+
+        publishStatus(0); //* Idle
+
         prev_newssid = tempNewSsid;
         prev_newpass = tempNewPass;
     }
 
     //* Motor Commands
     if (tempUp && prev_up == 0) {
+        publishStatus(11); //* Moving Up
+
         Serial.println("[mqtt] Command: UP");
         motorController.moveBy(-10);
+
+        publishStatus(0); //* Idle
     }
     prev_up = tempUp;
 
     if (tempDown && prev_down == 0) {
+        publishStatus(12); //* Moving Down
+
         Serial.println("[mqtt] Command: DOWN");
         motorController.moveBy(10);
+
+        publishStatus(0); //* Idle
     }
     prev_down = tempDown;
 
     if (tempPress1 && prev_press1 == 0) {
+        publishStatus(21); //* Pressing Button 1
+
         Serial.println("[mqtt] Command: PRESS 1");
         motorController.pressButton(1);
+
+        publishStatus(0); //* Idle
     }
     prev_press1 = tempPress1;
 
     if (tempPress2 && prev_press2 == 0) {
+        publishStatus(22); //* Pressing Button 2
+
         Serial.println("[mqtt] Command: PRESS 2");
         motorController.pressButton(2);
+
+        publishStatus(0); //* Idle
     }
     prev_press2 = tempPress2;
 
     if (tempPress3 && prev_press3 == 0) {
+        publishStatus(23); //* Pressing Button 3
+
         Serial.println("[mqtt] Command: PRESS 3");
-        motorController.pressButton(3);
+        motorController.pressButton(3); 
+
+        publishStatus(0); //* Idle
     }
     prev_press3 = tempPress3;
 
     if (tempSetMax && prev_setmax == 0) {
+        publishStatus(41); //* Setting Max Position
+
         Serial.println("[mqtt] Command: SET MAX POSITION");
-        motorController.setMaxPositionSetting(true);
         setMaxPosition(motorController.getCurrentPosition());
         motorController.setMaximumPosition(motorController.getCurrentPosition());
-        motorController.setMaxPositionSetting(false);
+
+        publishStatus(0); //* Idle
     }
     prev_setmax = tempSetMax;
 
     //* Saving Line Coordinates
     // set rows when changed (replace functionality)
-    if (tempRow1 != prev_row1) { setLineCoordinate(1, motorController.getCurrentPosition()); needSave = true; }
+    if (tempRow1 != prev_row1) { 
+        publishStatus(31); //* Setting Row 1 Position
+
+        setLineCoordinate(1, motorController.getCurrentPosition()); 
+        needSave = true; 
+    }
     prev_row1 = tempRow1;
-    if (tempRow2 != prev_row2) { setLineCoordinate(2, motorController.getCurrentPosition()); needSave = true; }
+
+    if (tempRow2 != prev_row2) { 
+        publishStatus(32); //* Setting Row 2 Position
+
+        setLineCoordinate(2, motorController.getCurrentPosition()); 
+        needSave = true; 
+    }
     prev_row2 = tempRow2;
-    if (tempRow3 != prev_row3) { setLineCoordinate(3, motorController.getCurrentPosition()); needSave = true; }
+
+    if (tempRow3 != prev_row3) { 
+        publishStatus(33); //* Setting Row 3 Position
+
+        setLineCoordinate(3, motorController.getCurrentPosition()); 
+        needSave = true; 
+    }
     prev_row3 = tempRow3;
-    if (tempRow4 != prev_row4) { setLineCoordinate(4, motorController.getCurrentPosition()); needSave = true; }
+    
+    if (tempRow4 != prev_row4) { 
+        publishStatus(34); //* Setting Row 4 Position
+
+        setLineCoordinate(4, motorController.getCurrentPosition()); 
+        needSave = true; 
+    }
     prev_row4 = tempRow4;
 
     if (needSave) {
         fsManager.saveConfig();
         Serial.println("[mqtt] Line coordinates updated and saved.");
+        publishStatus(0); //* Idle
     }
 
     //* Token Input
     if (tempKodeToken.length() && tempKodeToken != prev_kodetoken) {
+        publishStatus(1); //* Isi Token
+
         Serial.printf("[mqtt] Kode Token received: %s\n", tempKodeToken.c_str());
 
         for (size_t i = 0; i < tempKodeToken.length(); i++) {
@@ -292,6 +350,8 @@ void MqttManager::processCommands() {
             }
         }
         motorController.moveTo(0); // return to home after input
+
+        publishStatus(0); //* Idle
 
         prev_kodetoken = tempKodeToken;
     }

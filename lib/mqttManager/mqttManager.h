@@ -45,6 +45,26 @@ private:
     // Telemetry yang akan dikirim (random)
     float posisi = 0.0f;
     int   statusaptl = 0;
+    //* Status APTL:
+    //* 0 = Idle
+    //* 1 = Isi Token
+
+    //* 11 = Moving Up
+    //* 12 = Moving Down
+
+    //* 21 = Pressing Button 1
+    //* 22 = Pressing Button 2
+    //* 23 = Pressing Button 3
+
+    //* 31 = Setting Row 1 Position
+    //* 32 = Setting Row 2 Position
+    //* 33 = Setting Row 3 Position
+    //* 34 = Setting Row 4 Position
+
+    //* 41 = Setting Max Position
+
+    //* 51 = Setting WiFi SSID/Password
+
 
     // Cache shared attributes yang diterima
     String kodetoken = "";
@@ -65,6 +85,8 @@ private:
     String prev_newssid = "", prev_newpass = "";
 
     volatile bool subUpdated = false;
+
+    void publishStatus(int status);
 
     static MqttManager* _instance;
     static void _internalCallback(char* topic, byte* payload, unsigned int length);

@@ -2,7 +2,7 @@
 
 MotorController::MotorController() 
     : yPosition(0), yMaximumPosition(0), speedDelay(500), 
-    is_calibrated(false),  is_emergency_stop(false), is_max_position_setting(false), is_disabled(false),
+    is_calibrated(false),  is_emergency_stop(false), is_disabled(false),
     idleTimeoutMs(1 * 60 * 1000), lastActivityTimeMs(millis()) { //5 Minutes Default
 }
 
@@ -19,11 +19,6 @@ void MotorController::setSpeed(int speed) {
 }
 
 void MotorController::setMaximumPosition(float max_y) {
-    if (!getMaxPositionSetting()) {
-        Serial.println("Error: Maximum position setting is not enabled. Enable it first to set maximum position.\n");
-        return;
-    }
-
     Serial.println("Setting maximum position to: " + String(max_y) + " mm");
 
     if (max_y <= 0 || max_y > MAX_POSITION_LIMIT) {
@@ -116,7 +111,7 @@ void MotorController::moveTo(float y) {
 
     Serial.println("Moving to position: " + String(y));
 
-    long yTargetPosition = lround(y * STEPS_PER_MM); //! LOOKAT THE CONVERSION FACTOR IN motorConfig.h
+    long yTargetPosition = lround(y * STEPS_PER_MM);
 
     if (yTargetPosition < 0 || yTargetPosition > yMaximumPosition || yTargetPosition > MAX_POSITION_LIMIT) {
         Serial.println("Target position out of bounds.\n");
@@ -163,18 +158,14 @@ void MotorController::moveBy(float dy) {
         return;
     }
 
-    if (yMaximumPosition == 0 && !is_max_position_setting) {
+    if (yMaximumPosition == 0) {
         Serial.println("Maximum position not set. Please set it first.\n");
         return;
     }
 
-    if (is_max_position_setting) {
-        Serial.println("WARNING: Currently setting maximum position. Be careful when moving the tool manually.\n");
-    }
-
     long yTargetPosition = yPosition + lround(dy * STEPS_PER_MM); //! LOOKAT THE CONVERSION FACTOR IN motorConfig.h
 
-    if (yTargetPosition < 0 || yTargetPosition > yMaximumPosition && !is_max_position_setting || yTargetPosition > MAX_POSITION_LIMIT) {
+    if (yTargetPosition < 0 || yTargetPosition > yMaximumPosition || yTargetPosition > MAX_POSITION_LIMIT) {
         Serial.println("Target position out of bounds.\n");
         return;
     }

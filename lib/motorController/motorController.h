@@ -15,8 +15,6 @@ public:
     int getSpeed() const { return (1000000 / (speedDelay * STEPS_PER_MM)) / 2; } // Returns speed in mm/s
     void setMaximumPosition(float max_y);
     float getMaximumPosition() const { return yMaximumPosition / STEPS_PER_MM; } // Returns max position in mm
-    void setMaxPositionSetting(bool setting) { is_max_position_setting = setting; }
-    bool getMaxPositionSetting() const { return is_max_position_setting; }
     float getCurrentPosition() const { return yPosition / STEPS_PER_MM; } // Returns current position in mm
 
     void setup();
@@ -43,7 +41,6 @@ private:
     float yMaximumPosition;
     bool is_calibrated;
     bool is_emergency_stop;
-    bool is_max_position_setting;
     bool is_disabled;
 
     volatile unsigned long lastActivityTimeMs;
