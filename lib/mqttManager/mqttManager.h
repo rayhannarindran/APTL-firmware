@@ -48,6 +48,7 @@ private:
 
     // Cache shared attributes yang diterima
     String kodetoken = "";
+    int   home = 0;
     int   up = 0, down = 0;
     int   press1 = 0, press2 = 0, press3 = 0;
     int   stop = 0;
@@ -56,13 +57,14 @@ private:
     String newssid = "", newpass = "";
 
     // Previous state to detect changes
-    String prev_kodetoken = "";
+    String prev_kodetoken = "default";
+    int prev_home = 0;
     int prev_up = 0, prev_down = 0;
     int prev_press1 = 0, prev_press2 = 0, prev_press3 = 0;
     int prev_stop = 0;
     int prev_setmax = 0;
     int prev_row1 = 0, prev_row2 = 0, prev_row3 = 0, prev_row4 = 0;
-    String prev_newssid = "", prev_newpass = "";
+    String prev_newssid = "default", prev_newpass = "default";
 
     volatile bool subUpdated = false;
 

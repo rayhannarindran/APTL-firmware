@@ -118,8 +118,8 @@ void MotorController::moveTo(float y) {
 
     long yTargetPosition = lround(y * STEPS_PER_MM); //! LOOKAT THE CONVERSION FACTOR IN motorConfig.h
 
-    if (yTargetPosition < 0 || yTargetPosition > yMaximumPosition || yTargetPosition > MAX_POSITION_LIMIT) {
-        Serial.println("Target position out of bounds.\n");
+    if (yTargetPosition < 0 || yTargetPosition > yMaximumPosition || yTargetPosition > (MAX_POSITION_LIMIT * STEPS_PER_MM)) {
+        Serial.print("Target position out of bounds. yTarget: ");
         return;
     }
 
@@ -163,18 +163,23 @@ void MotorController::moveBy(float dy) {
         return;
     }
 
-    if (yMaximumPosition == 0 && !is_max_position_setting) {
-        Serial.println("Maximum position not set. Please set it first.\n");
-        return;
-    }
+    // if (yMaximumPosition == 0 && !is_max_position_setting) {
+    //     Serial.println("Maximum position not set. Please set it first.\n");
+    //     return;
+    // }
 
-    if (is_max_position_setting) {
-        Serial.println("WARNING: Currently setting maximum position. Be careful when moving the tool manually.\n");
-    }
+    // if (is_max_position_setting) {
+    //     Serial.println("WARNING: Currently setting maximum position. Be careful when moving the tool manually.\n");
+    // }
 
     long yTargetPosition = yPosition + lround(dy * STEPS_PER_MM); //! LOOKAT THE CONVERSION FACTOR IN motorConfig.h
 
-    if (yTargetPosition < 0 || yTargetPosition > yMaximumPosition && !is_max_position_setting || yTargetPosition > MAX_POSITION_LIMIT) {
+    // if (yTargetPosition < 0 || yTargetPosition > yMaximumPosition && !is_max_position_setting || yTargetPosition > MAX_POSITION_LIMIT) {
+    //     Serial.println("Target position out of bounds.\n");
+    //     return;
+    // }
+
+    if (yTargetPosition < 0 || yTargetPosition > (MAX_POSITION_LIMIT * STEPS_PER_MM)) {
         Serial.println("Target position out of bounds.\n");
         return;
     }
@@ -239,14 +244,20 @@ long MotorController::stepMotor(bool move_down, long steps) {
     if (moved > 0) {
         if (move_down) {
             yPosition += moved;
-            if (yPosition > yMaximumPosition) yPosition = yMaximumPosition;
+
+            // if (yMaximumPosition > 0 && yPosition > yMaximumPosition) {
+            //     yPosition = yMaximumPosition;
+            // }
         } else {
             yPosition -= moved;
-            if (yPosition < 0) yPosition = 0;
+
+            // long minPosition = CLEARANCE_STEPS;
+            // if (yPosition < minPosition) {
+            //     yPosition = minPosition;
+            // }
         }
     }
 
-    // short settle delay (avoid long blocking)
     delay(50);
     return moved;
 }

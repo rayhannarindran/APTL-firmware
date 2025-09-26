@@ -60,7 +60,7 @@ void MqttManager::loop() {
 }
 
 void MqttManager::requestShared() {
-  const char* keys = "kodetoken,up,down,press1,press2,press3,stop,setmax,row1,row2,row3,row4,newssid,newpass";
+  const char* keys = "kodetoken,home,up,down,press1,press2,press3,stop,setmax,row1,row2,row3,row4,newssid,newpass";
   char payload[128];
   snprintf(payload, sizeof(payload), "{\"sharedKeys\":\"%s\"}", keys);
   _client.publish(_instance->TOPIC_REQ, payload);
@@ -74,8 +74,13 @@ void MqttManager::applyShared(JsonVariant root) {
     bool changed = false;
 
     if (obj["kodetoken"].is<String>()) {
-    String nv = obj["kodetoken"].as<String>();
-    if (nv != kodetoken) { kodetoken = nv; changed = true; }
+        String nv = obj["kodetoken"].as<String>();
+        if (nv != kodetoken) { kodetoken = nv; changed = true; }
+    }
+
+    if (obj["home"].is<int>()) {
+        int nv = obj["home"].as<int>();
+        if (nv != home) { home = nv; changed = true; }
     }
 
     if (obj["up"].is<int>()) {
@@ -160,8 +165,8 @@ void MqttManager::publishTelemetry() {
 }
 
 void MqttManager::printSubTick() {
-  Serial.printf("[sub] updated=%s | kodetoken=%s | up=%d | down=%d | press1=%d | press2=%d | press3=%d | stop=%d | setmax=%d | row1=%d | row2=%d | row3=%d | row4=%d | newssid=%s | newpass=%s\n",
-                subUpdated ? "Yes" : "No", kodetoken.c_str(), up, down, press1, press2, press3, stop, setmax, row1, row2, row3, row4, newssid.c_str(), newpass.c_str());
+  Serial.printf("[sub] updated=%s | kodetoken=%s | home=%d | up=%d | down=%d | press1=%d | press2=%d | press3=%d | stop=%d | setmax=%d | row1=%d | row2=%d | row3=%d | row4=%d | newssid=%s | newpass=%s\n",
+                subUpdated ? "Yes" : "No", kodetoken.c_str(), home, up, down, press1, press2, press3, stop, setmax, row1, row2, row3, row4, newssid.c_str(), newpass.c_str());
   subUpdated = false;
 }
 
@@ -190,6 +195,7 @@ void MqttManager::processCommands() {
     if (!subUpdated) return;
 
     String tempKodeToken = kodetoken;
+    int tempHome = home;
     int tempUp = up;
     int tempDown = down;
     int tempPress1 = press1;
@@ -218,6 +224,13 @@ void MqttManager::processCommands() {
         prev_newpass = tempNewPass;
     }
 
+    //* Homing Motor
+    if (tempHome && prev_home == 0){
+        Serial.println("[mqtt] Command: HOME");
+        motorController.calibrate();
+    }
+    prev_home = tempHome;
+
     //* Motor Commands
     if (tempUp && prev_up == 0) {
         Serial.println("[mqtt] Command: UP");
@@ -231,6 +244,7 @@ void MqttManager::processCommands() {
     }
     prev_down = tempDown;
 
+    //* Servo Commands
     if (tempPress1 && prev_press1 == 0) {
         Serial.println("[mqtt] Command: PRESS 1");
         motorController.pressButton(1);
@@ -249,24 +263,46 @@ void MqttManager::processCommands() {
     }
     prev_press3 = tempPress3;
 
+    //* Setting Max Position
     if (tempSetMax && prev_setmax == 0) {
         Serial.println("[mqtt] Command: SET MAX POSITION");
         motorController.setMaxPositionSetting(true);
+
         setMaxPosition(motorController.getCurrentPosition());
         motorController.setMaximumPosition(motorController.getCurrentPosition());
+
+        // setMaxPosition(120);
+        // motorController.setMaximumPosition(120);
+
         motorController.setMaxPositionSetting(false);
     }
     prev_setmax = tempSetMax;
 
     //* Saving Line Coordinates
     // set rows when changed (replace functionality)
-    if (tempRow1 != prev_row1) { setLineCoordinate(1, motorController.getCurrentPosition()); needSave = true; }
+    if (tempRow1 && prev_row1 == 0) { 
+        Serial.println("Saving Row 1 to Position: " + String(motorController.getCurrentPosition()));
+        setLineCoordinate(1, motorController.getCurrentPosition()); 
+        needSave = true; 
+    }
     prev_row1 = tempRow1;
-    if (tempRow2 != prev_row2) { setLineCoordinate(2, motorController.getCurrentPosition()); needSave = true; }
+    if (tempRow2 && prev_row2 == 0) { 
+        Serial.println("Saving Row 2 to Position: " + String(motorController.getCurrentPosition()));
+        setLineCoordinate(2, motorController.getCurrentPosition()); 
+        needSave = true; 
+    }
     prev_row2 = tempRow2;
-    if (tempRow3 != prev_row3) { setLineCoordinate(3, motorController.getCurrentPosition()); needSave = true; }
+    if (tempRow3 && prev_row3 == 0) { 
+        Serial.println("Saving Row 3 to Position: " + String(motorController.getCurrentPosition()));
+        setLineCoordinate(3, motorController.getCurrentPosition()); 
+        needSave = true; 
+    }
     prev_row3 = tempRow3;
-    if (tempRow4 != prev_row4) { setLineCoordinate(4, motorController.getCurrentPosition()); needSave = true; }
+    if (tempRow4 && prev_row4 == 0) { 
+        Serial.println("Saving Row 4 to Position: " + String(motorController.getCurrentPosition()));
+        setLineCoordinate(4, motorController.getCurrentPosition()); 
+        needSave = true; 
+    }
     prev_row4 = tempRow4;
 
     if (needSave) {
@@ -277,6 +313,10 @@ void MqttManager::processCommands() {
     //* Token Input
     if (tempKodeToken.length() && tempKodeToken != prev_kodetoken) {
         Serial.printf("[mqtt] Kode Token received: %s\n", tempKodeToken.c_str());
+
+        if(!motorController.getMotorStatus()){
+            motorController.calibrate();
+        }
 
         for (size_t i = 0; i < tempKodeToken.length(); i++) {
             char c = tempKodeToken[i];
@@ -292,7 +332,6 @@ void MqttManager::processCommands() {
             }
         }
         motorController.moveTo(0); // return to home after input
-
         prev_kodetoken = tempKodeToken;
     }
 }

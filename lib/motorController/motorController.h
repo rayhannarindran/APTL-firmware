@@ -18,6 +18,7 @@ public:
     void setMaxPositionSetting(bool setting) { is_max_position_setting = setting; }
     bool getMaxPositionSetting() const { return is_max_position_setting; }
     float getCurrentPosition() const { return yPosition / STEPS_PER_MM; } // Returns current position in mm
+    bool getMotorStatus() const { return !is_disabled; }
 
     void setup();
     long stepMotor(bool move_down, long steps);

@@ -56,39 +56,9 @@ void setup() {
     //* Initializing Motor Controller
     motorController.setup();
     motorController.calibrate();
-
-
-    // //! TESTS
-    // //* Config Check
-    // fsManager.readConfig();
-
-    //* Motor Test
     motorController.setMaxPositionSetting(true);
     motorController.setMaximumPosition(120);
     motorController.setMaxPositionSetting(false);
-
-    // //* Servo Test
-    // motorController.pressButton(1);
-    // motorController.moveTo(20);
-    // motorController.pressButton(2);
-    // motorController.moveTo(80);
-    // motorController.pressButton(3);
-    // motorController.moveTo(110);
-
-    // //* Specific Button Test
-    // motorController.pressSpecificButton(1);
-    // motorController.pressSpecificButton(2);
-    // motorController.pressSpecificButton(3);
-    // motorController.pressSpecificButton(4);
-    // motorController.pressSpecificButton(5);
-    // motorController.pressSpecificButton(6);
-    // motorController.pressSpecificButton(7);
-    // motorController.pressSpecificButton(8);
-    // motorController.pressSpecificButton(9);
-    // motorController.pressSpecificButton(0);
-    // motorController.pressSpecificButton(10); // Backspace
-    // motorController.pressSpecificButton(11); // Submit
-    // motorController.moveTo(0);
 }
 
 void loop() {
