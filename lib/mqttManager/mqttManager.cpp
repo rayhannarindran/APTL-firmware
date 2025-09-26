@@ -60,7 +60,7 @@ void MqttManager::loop() {
 }
 
 void MqttManager::requestShared() {
-  const char* keys = "kodetoken,up,down,press1,press2,press3,stop,setmax,row1,row2,row3,row4,newssid,newpass";
+  const char* keys = "kodetoken,home,up,down,press1,press2,press3,stop,setmax,row1,row2,row3,row4,newssid,newpass";
   char payload[128];
   snprintf(payload, sizeof(payload), "{\"sharedKeys\":\"%s\"}", keys);
   _client.publish(_instance->TOPIC_REQ, payload);
@@ -74,8 +74,13 @@ void MqttManager::applyShared(JsonVariant root) {
     bool changed = false;
 
     if (obj["kodetoken"].is<String>()) {
-    String nv = obj["kodetoken"].as<String>();
-    if (nv != kodetoken) { kodetoken = nv; changed = true; }
+        String nv = obj["kodetoken"].as<String>();
+        if (nv != kodetoken) { kodetoken = nv; changed = true; }
+    }
+
+    if (obj["home"].is<int>()) {
+        int nv = obj["home"].as<int>();
+        if (nv != home) { home = nv; changed = true; }
     }
 
     if (obj["up"].is<int>()) {
@@ -165,8 +170,8 @@ void MqttManager::publishStatus(int status) {
 }
 
 void MqttManager::printSubTick() {
-  Serial.printf("[sub] updated=%s | kodetoken=%s | up=%d | down=%d | press1=%d | press2=%d | press3=%d | stop=%d | setmax=%d | row1=%d | row2=%d | row3=%d | row4=%d | newssid=%s | newpass=%s\n",
-                subUpdated ? "Yes" : "No", kodetoken.c_str(), up, down, press1, press2, press3, stop, setmax, row1, row2, row3, row4, newssid.c_str(), newpass.c_str());
+  Serial.printf("[sub] updated=%s | kodetoken=%s | home=%d | up=%d | down=%d | press1=%d | press2=%d | press3=%d | stop=%d | setmax=%d | row1=%d | row2=%d | row3=%d | row4=%d | newssid=%s | newpass=%s\n",
+                subUpdated ? "Yes" : "No", kodetoken.c_str(), home, up, down, press1, press2, press3, stop, setmax, row1, row2, row3, row4, newssid.c_str(), newpass.c_str());
   subUpdated = false;
 }
 
@@ -195,6 +200,7 @@ void MqttManager::processCommands() {
     if (!subUpdated) return;
 
     String tempKodeToken = kodetoken;
+    int tempHome = home;
     int tempUp = up;
     int tempDown = down;
     int tempPress1 = press1;
@@ -228,6 +234,13 @@ void MqttManager::processCommands() {
         prev_newpass = tempNewPass;
     }
 
+    //* Homing Motor
+    if (tempHome && prev_home == 0){
+        Serial.println("[mqtt] Command: HOME");
+        motorController.calibrate();
+    }
+    prev_home = tempHome;
+
     //* Motor Commands
     if (tempUp && prev_up == 0) {
         publishStatus(11); //* Moving Up
@@ -249,6 +262,7 @@ void MqttManager::processCommands() {
     }
     prev_down = tempDown;
 
+    //* Servo Commands
     if (tempPress1 && prev_press1 == 0) {
         publishStatus(21); //* Pressing Button 1
 
@@ -279,6 +293,7 @@ void MqttManager::processCommands() {
     }
     prev_press3 = tempPress3;
 
+    //* Setting Max Position
     if (tempSetMax && prev_setmax == 0) {
         publishStatus(41); //* Setting Max Position
 
@@ -335,6 +350,10 @@ void MqttManager::processCommands() {
         publishStatus(1); //* Isi Token
 
         Serial.printf("[mqtt] Kode Token received: %s\n", tempKodeToken.c_str());
+
+        if(!motorController.getMotorStatus()){
+            motorController.calibrate();
+        }
 
         for (size_t i = 0; i < tempKodeToken.length(); i++) {
             char c = tempKodeToken[i];

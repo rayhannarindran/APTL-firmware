@@ -12,6 +12,11 @@ void WifiManager::init(const String& ssid, const String& password) {
 
 void WifiManager::connect() {
     Serial.print("Connecting to WiFi...");
+
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect(true);
+    delay(200);
+
     WiFi.begin(ssid.c_str(), password.c_str());
     unsigned long startAttemptTime = millis();
 
@@ -89,6 +94,11 @@ void WifiManager::apMode() {
     IPAddress apIP(192,168,4,1);
     IPAddress netMsk(255,255,255,0);
 
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
+    delay(200);
+
+    WiFi.mode(WIFI_AP_STA);
     WiFi.softAPConfig(apIP, apIP, netMsk);
     WiFi.softAP(AP_SSID);
     Serial.println("Access Point started.");
@@ -104,8 +114,17 @@ void WifiManager::apMode() {
 
     // Scan networks for the dropdown
     Serial.println("Scanning for available networks...\n");
+    delay(500);
     int n = WiFi.scanNetworks();
-    Serial.println("Found " + String(n) + " networks!\n");
+
+    if (n == -2){
+        Serial.println("Scan Failed, retrying AP Mode");
+        return;
+    } else if (n == 0) {
+        Serial.println("No Networks Found.");
+    } else {
+        Serial.println("Found " + String(n) + " networks!\n");
+    }
 
     String networksHtml;
     networksHtml.reserve(1024);

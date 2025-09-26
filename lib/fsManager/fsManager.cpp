@@ -23,6 +23,7 @@ void FSManager::saveConfig() {
     doc["deviceID"] = getDeviceID();
     doc["wifiSSID"] = getWiFiSSID();
     doc["wifiPassword"] = getWiFiPassword();
+    doc["maxPosition"] = getMaxPosition();
     JsonObject lineCoords = doc["lineCoordinates"].to<JsonObject>();
     for (const auto& pair : getLineCoordinates()) {
         lineCoords[String(pair.first)] = pair.second;
@@ -66,6 +67,7 @@ void FSManager::loadConfig() {
     setDeviceName(doc["deviceName"].as<String>());
     setDeviceID(doc["deviceID"].as<String>());
     setWiFiCredentials(doc["wifiSSID"].as<String>(), doc["wifiPassword"].as<String>());
+    setMaxPosition(doc["maxPosition"].as<float>());
 
     std::map<int, float> newCoords;
     if (doc["lineCoordinates"].is<JsonObject>()) {

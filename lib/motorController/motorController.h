@@ -16,6 +16,7 @@ public:
     void setMaximumPosition(float max_y);
     float getMaximumPosition() const { return yMaximumPosition / STEPS_PER_MM; } // Returns max position in mm
     float getCurrentPosition() const { return yPosition / STEPS_PER_MM; } // Returns current position in mm
+    bool getMotorStatus() const { return !is_disabled; }
 
     void setup();
     long stepMotor(bool move_down, long steps);

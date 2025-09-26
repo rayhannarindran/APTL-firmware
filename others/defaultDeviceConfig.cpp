@@ -1,6 +1,6 @@
 //! RENAME THIS FILE TO deviceConfig.cpp AND EDIT THE SETTINGS BELOW
 
-#include "deviceConfig.h"
+// #include "deviceConfig.h"
 
 //* ================== MQTT (ThingsBoard - Non TLS) ==================
 static const IPAddress MQTT_IP(0, 0, 0, 0);
