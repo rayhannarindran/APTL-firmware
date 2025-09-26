@@ -67,10 +67,13 @@ void setup() {
     motorController.setMaximumPosition(120);
     motorController.setMaxPositionSetting(false);
 
-    //* Servo Test
+    // //* Servo Test
     // motorController.pressButton(1);
+    // motorController.moveTo(20);
     // motorController.pressButton(2);
+    // motorController.moveTo(80);
     // motorController.pressButton(3);
+    // motorController.moveTo(110);
 
     // //* Specific Button Test
     // motorController.pressSpecificButton(1);
